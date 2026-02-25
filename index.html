@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>補水小精靈 💧</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+        h1 { color: #5dade2; font-size: 1.8rem; margin-top: 0; }
+        .stats { margin: 20px 0; }
+        .total-amount { font-size: 2.5rem; font-weight: bold; color: #2e86c1; }
+        .progress-container {
+            background-color: #e5e8e8;
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            background-color: #5dade2;
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 0;
+            font-size: 0.8rem;
+            line-height: 20px;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #d4e6f1;
+            border-radius: 10px;
+            outline: none;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5dade2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+        button:hover { background-color: #3498db; }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-reset { background-color: #ec7063; font-size: 0.9rem; flex: 1; }
+        .btn-reset:hover { background-color: #e74c3c; }
+        .btn-stats { background-color: #f39c12; font-size: 0.9rem; flex: 1; }
+        .btn-stats:hover { background-color: #e67e22; }
+
+        .history {
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.95rem;
+            color: #555;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+
+        /* 自訂彈出視窗樣式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+        .modal {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            animation: popIn 0.3s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal h2 { margin-top: 0; color: #2e86c1; font-size: 1.4rem; }
+        .modal p { margin-bottom: 20px; color: #333; font-weight: bold; }
+        .modal-buttons { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background-color: #bdc3c7; }
+        .btn-cancel:hover { background-color: #95a5a6; }
+
+        /* 統計圖表樣式 */
+        .month-total { font-size: 1.5rem; color: #e67e22; font-weight: bold; margin: 10px 0; }
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 150px;
+            margin: 20px 0;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            position: relative;
+        }
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 12%;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .bar {
+            background-color: #85c1e9;
+            width: 100%;
+            border-radius: 5px 5px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+        .bar-label {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+            position: absolute;
+            bottom: -20px;
+        }
+        .bar-value {
+            font-size: 0.65rem;
+            color: #2980b9;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💧 補水小精靈</h1>
+    <div class="stats">
+        <p style="margin:0; color:#7f8c8d; font-size: 0.9rem;">今日已飲水</p>
+        <div class="total-amount"><span id="total">0</span> <small style="font-size: 1rem;">ml</small></div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-text">目標 3000 ml</div>
+        </div>
+        <p id="message" style="font-size: 0.95rem; color: #5499c7; font-weight: bold;">加油！多喝水皮膚會變好喔～</p>
+    </div>
+
+    <div class="input-group">
+        <input type="number" id="waterInput" placeholder="輸入 cc 數..." min="1">
+        <button onclick="addWater()">喝掉它！</button>
+    </div>
+
+    <div class="history">
+        <strong style="color: #5dade2;">📝 今日飲水小本本：</strong>
+        <div id="historyList"></div>
+    </div>
+    
+    <div class="btn-group">
+        <button class="btn-reset" onclick="requestReset()">重置今日</button>
+        <button class="btn-stats" onclick="showStats()">📊 看統計</button>
+    </div>
+</div>
+
+<!-- 自訂提醒視窗 -->
+<div class="modal-overlay" id="alertModal">
+    <div class="modal" style="max-width: 250px;">
+        <p id="alertMessage">提示訊息</p>
+        <button onclick="closeModal('alertModal')">知道惹！</button>
+    </div>
+</div>
+
+<!-- 自訂確認視窗 -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width: 280px;">
+        <p>確定要清除「今天」的紀錄嗎？(>_<)</p>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModal('confirmModal')">取消</button>
+            <button class="btn-reset" style="margin-top:0; width:auto;" onclick="executeReset()">確定清除</button>
+        </div>
+    </div>
+</div>
+
+<!-- 統計資料視窗 -->
+<div class="modal-overlay" id="statsModal">
+    <div class="modal">
+        <h2>📊 你的補水成績單</h2>
+        <p style="margin-bottom: 5px; color: #7f8c8d; font-size: 0.9rem;">本月總飲水量</p>
+        <div class="month-total"><span id="monthTotalAmount">0</span> <small style="font-size: 1rem;">ml</small></div>
+        
+        <p style="margin-top: 20px; margin-bottom: 10px; color: #7f8c8d; font-size: 0.9rem;">近七天日統計</p>
+        <div class="chart-container" id="barChart">
+            <!-- 長條圖會由 JS 生成 -->
+        </div>
+
+        <button class="btn-cancel" style="width: 100%; margin-top: 10px;" onclick="closeModal('statsModal')">關閉</button>
+    </div>
+</div>
+
+<script>
+    const goal = 3000; // 目標改為 3000ml 囉！
+    
+    // 從瀏覽器儲存空間讀取資料，如果沒有就給一個空物件
+    // 資料格式： { "2023-10-25": [{time: "10:00", amount: 200}, ...] }
+    let appData = JSON.parse(localStorage.getItem('waterData')) || {};
+
+    // 取得今天的日期字串 (YYYY-MM-DD)
+    function getTodayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // 取得這個月的字串 (YYYY-MM)
+    function getMonthStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // 初始化畫面
+    function init() {
+        updateUI();
+    }
+
+    // 新增喝水紀錄
+    function addWater() {
+        const input = document.getElementById('waterInput');
+        const amount = parseInt(input.value);
+
+        if (isNaN(amount) || amount <= 0) {
+            showAlert("請輸入正確的水量唷！(,,・ω・,,)");
+            return;
+        }
+
+        const today = getTodayStr();
+        if (!appData[today]) {
+            appData[today] = [];
+        }
+
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        
+        // 儲存進資料庫
+        appData[today].push({ time: timeStr, amount: amount });
+        localStorage.setItem('waterData', JSON.stringify(appData));
+
+        updateUI();
+        input.value = '';
+    }
+
+    // 更新主畫面
+    function updateUI() {
+        const today = getTodayStr();
+        const todayRecords = appData[today] || [];
+        
+        // 計算今日總和
+        let todayTotal = todayRecords.reduce((sum, record) => sum + record.amount, 0);
+
+        document.getElementById('total').innerText = todayTotal;
+        
+        // 更新進度條
+        const percent = Math.min((todayTotal / goal) * 100, 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+
+        // 重新渲染歷史紀錄 (反轉陣列讓最新的一筆在最上面)
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+        
+        [...todayRecords].reverse().forEach(record => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<span>🕒 ${record.time}</span> <span style="color: #2e86c1; font-weight: bold;">+${record.amount} ml</span>`;
+            historyList.appendChild(item);
+        });
+
+        // 檢查是否達成目標
+        const messageEl = document.getElementById('message');
+        if (todayTotal >= goal) {
+            messageEl.innerText = "🎉 太棒了！3000ml 達成！✨";
+            messageEl.style.color = "#27ae60";
+        } else {
+            messageEl.innerText = "加油！多喝水皮膚會變好喔～";
+            messageEl.style.color = "#5499c7";
+        }
+    }
+
+    // 打開統計面板
+    function showStats() {
+        const monthStr = getMonthStr();
+        let monthTotal = 0;
+        
+        // 計算本月總和
+        for (const [date, records] of Object.entries(appData)) {
+            if (date.startsWith(monthStr)) {
+                monthTotal += records.reduce((sum, r) => sum + r.amount, 0);
+            }
+        }
+        document.getElementById('monthTotalAmount').innerText = monthTotal;
+
+        // 生成近七天日統計
+        const chartContainer = document.getElementById('barChart');
+        chartContainer.innerHTML = ''; // 清空舊圖表
+        
+        // 取得過去七天的日期
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const displayDate = `${d.getMonth() + 1}/${d.getDate()}`;
+            
+            const dayRecords = appData[dateStr] || [];
+            const dayTotal = dayRecords.reduce((sum, r) => sum + r.amount, 0);
+            
+            last7Days.push({ date: displayDate, total: dayTotal });
+        }
+
+        // 找出這七天的最大值作為長條圖的 100% 基準 (至少要以 goal 為基準才好看)
+        const maxAmount = Math.max(goal, ...last7Days.map(d => d.total));
+
+        // 繪製長條圖
+        last7Days.forEach(day => {
+            const heightPercent = (day.total / maxAmount) * 100;
+            const barWrapper = document.createElement('div');
+            barWrapper.className = 'bar-wrapper';
+            
+            let barColor = '#85c1e9';
+            if(day.total >= goal) barColor = '#58d68d'; // 達標變綠色
+            if(day.total === 0) barColor = '#eaecee';
+
+            barWrapper.innerHTML = `
+                <div class="bar-value">${day.total > 0 ? day.total : ''}</div>
+                <div class="bar" style="height: ${heightPercent}%; background-color: ${barColor};"></div>
+                <div class="bar-label">${day.date}</div>
+            `;
+            chartContainer.appendChild(barWrapper);
+        });
+
+        document.getElementById('statsModal').style.display = 'flex';
+    }
+
+    // 呼叫確認視窗
+    function requestReset() {
+        document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    // 確定重置「今日」資料
+    function executeReset() {
+        const today = getTodayStr();
+        appData[today] = []; // 清空今天的陣列
+        localStorage.setItem('waterData', JSON.stringify(appData)); // 存回資料庫
+        
+        updateUI(); // 重新整理畫面
+        closeModal('confirmModal');
+    }
+
+    // 顯示自訂提醒視窗
+    function showAlert(msg) {
+        document.getElementById('alertMessage').innerText = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+    }
+
+    // 關閉視窗
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // 啟動程式
+    init();
+</script>
+
+</body>
+</html>
